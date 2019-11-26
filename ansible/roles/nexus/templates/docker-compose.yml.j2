@@ -1,0 +1,33 @@
+version: '3.6'
+
+services:
+  nginx-proxy:
+    image: nginx:1.17.5-alpine
+    hostname: nginx
+    container_name: nexus_nginx
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+      - '5000:5000'
+      - '18443:18443'
+    volumes:
+      - /mnt/nexus/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /mnt/nexus/nginx/{{ domain_name }}.crt:/etc/nginx/{{ domain_name }}.crt:ro
+      - /mnt/nexus/nginx/{{ domain_name }}.key:/etc/nginx/{{ domain_name }}.key:ro
+    networks:
+      - backend
+    command: [ nginx, '-g', 'daemon off;' ]
+
+  jenkins:
+    image: sonatype/nexus3:{{ nexus_version }}
+    hostname: nexus
+    container_name: nexus_service
+    restart: always
+    volumes:
+      - /mnt/nexus/data:/nexus-data
+    networks:
+      - backend
+
+networks:
+  backend:

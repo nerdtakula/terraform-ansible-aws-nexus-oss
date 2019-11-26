@@ -1,0 +1,116 @@
+events {
+}
+
+http {
+    server {
+        # Redirect all http traffic on port 80 to https
+        listen      80;
+        server_name {{ domain_name }};
+        ssl         off;
+        return      301 https://{{ domain_name }}$request_uri;
+    }
+
+    ssl_certificate           /etc/nginx/{{ domain_name }}.crt;
+    ssl_certificate_key       /etc/nginx/{{ domain_name }}.key;
+    ssl_session_timeout       4h;
+    
+    ssl_protocols             TLSv1.1 TLSv1.2 TLSv1.3;
+    ssl_ciphers               ECDH+AESGCM:ECDH+AES256:ECDH+AES128:DH+3DES:!ADH:!AECDH:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_ecdh_curve            secp384r1;
+    ssl_session_cache         shared:SSL:40m;
+
+    server {
+        # FQDN nexus proxy
+        listen      443 ssl;
+        server_name {{ domain_name }};
+
+        access_log /var/log/nginx/nexus_access.log;
+        error_log  /var/log/nginx/nexus_error.log;
+
+        # Pass through headers from Nexus which are considered invalid by Nginx server.
+        ignore_invalid_headers off;
+
+        location /service/rest/ {
+            sendfile         off;
+
+            proxy_pass       http://nexus:8080;
+            proxy_redirect   off;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Host $server_name;
+            proxy_set_header X-Forwarded-Proto https;
+            # Enable CORS as we want to be able to use the API from other services.
+            add_header       Access-Control-Allow-Origin *;
+            add_header       Access-Control-Allow-Credentials true;
+        }
+
+        location / {
+            sendfile         off;
+
+            proxy_pass       http://nexus:8080;
+            proxy_redirect   off;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Host $server_name;
+            proxy_set_header X-Forwarded-Proto https;
+
+            proxy_max_temp_file_size 0;
+
+            # This is the maximum upload size
+            client_max_body_size       5G;
+            client_body_buffer_size    128k;
+
+            proxy_connect_timeout       90;
+            proxy_send_timeout          120;
+            proxy_read_timeout          300;
+            proxy_buffering             off;
+            proxy_request_buffering     off; # Required for HTTP CLI commands in Jenkins > 2.54
+            proxy_set_header Connection "";  # Clear for keepalive
+        }
+    }
+
+    server {
+        # Docker registry for listing images
+        listen      5000 ssl;
+        server_name {{ registry_domain_name }};
+
+        # disable any limits to avoid HTTP 413 for large image uploads
+        client_max_body_size  0;
+
+        # required to avoid HTTP 411: see Issue #1486 (https://github.com/moby/moby/issues/1486)
+        chunked_transfer_encoding on;
+
+        location / {
+            proxy_pass       http://nexus:5000;
+            proxy_redirect   off;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+        }
+    }
+
+    server {
+        # Docker registry for listing images
+        listen      443 ssl;
+        server_name {{ registry_domain_name }};
+
+        # disable any limits to avoid HTTP 413 for large image uploads
+        client_max_body_size  0;
+
+        # required to avoid HTTP 411: see Issue #1486 (https://github.com/moby/moby/issues/1486)
+        chunked_transfer_encoding on;
+
+        location / {
+            proxy_pass       http://nexus:18443;
+            proxy_redirect   off;
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto https;
+        }
+    }
+}

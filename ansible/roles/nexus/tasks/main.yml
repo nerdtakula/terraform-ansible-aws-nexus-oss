@@ -1,0 +1,66 @@
+---
+# file: roles/nexus/tasks/main.yml
+
+- name: create nexus data directory
+  file:
+    name: /mnt/nexus/data
+    state: directory
+    recurse: yes
+    owner: '1000'
+    group: '1000'
+
+- name: create nginx home directory
+  file:
+    name: /mnt/nexus/nginx
+    state: directory
+    recurse: yes
+    owner: '1000'
+    group: '1000'
+
+- name: copy certificates under ansible files
+  become: false
+  local_action: command cp {{ item.src }} {{ playbook_dir }}/roles/nexus/files/{{ item.dest }}
+  loop:
+    - { src: '{{ ssl_cert }}', dest: '{{ domain_name }}.crt' }
+    - { src: '{{ ssl_key }}', dest: '{{ domain_name }}.key' }
+
+- name: copy SSL certificates for service
+  copy:
+    src: '{{ item }}'
+    dest: '/mnt/nexus/nginx/{{ item }}'
+    owner: '1000'
+    group: '1000'
+  loop:
+    - '{{ domain_name }}.crt'
+    - '{{ domain_name }}.key'
+
+- name: copy nginx config
+  template:
+    src: nginx.conf.j2
+    dest: /mnt/nexus/nginx/nginx.conf
+    backup: yes
+
+- name: check for existing docker-compose file
+  stat:
+    path: /mnt/nexus/docker-compose.yml
+  register: stat_result
+
+- name: tear down existing services
+  docker_compose:
+    project_src: /mnt/nexus
+    state: absent
+  when: stat_result.stat.exists == True
+
+- name: place our docker-compose file
+  template:
+    src: docker-compose.yml.j2
+    dest: /mnt/nexus/docker-compose.yml
+    backup: yes
+
+- name: create and start services
+  docker_compose:
+    project_src: /mnt/nexus
+  register: output
+
+- debug:
+    var: output

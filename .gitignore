@@ -7,3 +7,14 @@
 
 # .tfvars files
 *.tfvars
+
+# .plan files
+*.plan
+
+# SSH keys
+*id_rsa*
+
+# SSL related files
+*.key
+*.crt
+*.csr

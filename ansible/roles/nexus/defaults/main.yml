@@ -1,0 +1,11 @@
+---
+# file: roles/nexus/defaults/main.yml
+
+# Version of Nexus OSS from 'https://hub.docker.com/r/sonatype/nexus3/'
+nexus_version: 3.19.1
+
+# Domain to match Route53
+domain_name: git.domain.com
+registry_domain_name: registry.domain.com
+ssl_cert: git.domain.com.cert
+ssl_key: git.domain.com.key
