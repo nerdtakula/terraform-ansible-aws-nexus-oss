@@ -26,6 +26,8 @@ services:
     restart: always
     volumes:
       - /mnt/nexus/data:/nexus-data
+    ports:
+      - '8081:8081'
     networks:
       - backend
 
