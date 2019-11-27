@@ -1,7 +1,7 @@
 ---
 # file: site.yml
 
-- hosts:nexus 
+- hosts: nexus 
   become: yes
   roles:
     - common
