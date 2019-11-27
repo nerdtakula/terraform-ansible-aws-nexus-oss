@@ -19,7 +19,7 @@ services:
       - backend
     command: [ nginx, '-g', 'daemon off;' ]
 
-  jenkins:
+  nexus:
     image: sonatype/nexus3:{{ nexus_version }}
     hostname: nexus
     container_name: nexus_service
