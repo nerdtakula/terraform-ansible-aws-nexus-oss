@@ -55,6 +55,21 @@ variable "ssl_cert_file" {
   description = "SSL cert file for website"
 }
 
+variable "ssl_cert_key" {
+  type        = string
+  description = "SSL cert key file for website"
+}
+
+variable "domain_name" {
+  type        = string
+  description = "Domain name to use within configuration"
+}
+
+variable "registry_domain_name" {
+  type        = string
+  description = "Docker Registry domain name to use within configuration"
+}
+
 variable "ansible_user" {
   type        = string
   description = "username of the root user on the EC2 instance"

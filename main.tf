@@ -46,7 +46,7 @@ resource "aws_instance" "instance" {
   security_groups = [aws_security_group.instance.name]
   key_name        = var.ssh_key_pair
   monitoring      = true
-  user_data       = "${file("${path.module}/scripts/setup_instance.sh")}"
+  user_data       = "${file("${path.module}/scripts/setup_mount.sh")}"
 
   root_block_device {
     volume_type           = "standard"
@@ -74,6 +74,7 @@ echo "${aws_instance.instance.public_ip} ansible_user=${var.ansible_user} ansibl
 echo "" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "[nexus:vars]" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "domain_name = ${var.domain_name}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
+echo "registry_domain_name = ${var.registry_domain_name}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "ssl_cert = ${var.ssl_cert_file}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 echo "ssl_key = ${var.ssl_cert_key}" >> ./ansible-${var.namespace}-${var.stage}-${var.name}.inventory;
 %{for k, v in var.ansible_vars~}
