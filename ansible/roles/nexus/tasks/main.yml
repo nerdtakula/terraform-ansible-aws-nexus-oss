@@ -6,8 +6,8 @@
     name: /mnt/nexus/data
     state: directory
     recurse: yes
-    owner: '1000'
-    group: '1000'
+    owner: '200'
+    group: '200'
 
 - name: create nginx home directory
   file:
